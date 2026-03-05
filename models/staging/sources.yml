@@ -1,0 +1,52 @@
+version: 2
+
+sources:
+  - name: cms
+    description: "Raw CMS Medicare DE-SynPUF data loaded from Sample 1 (2008-2010)"
+    database: RAW_DB
+    schema: PUBLIC
+    tables:
+      - name: beneficiaries
+        description: >
+          Medicare beneficiary demographics and chronic condition flags.
+          Note: One row per beneficiary per year (2008-2010), so beneficiary_id
+          is not unique at the source level — deduplication happens in staging.
+        columns:
+          - name: BENEFICIARY_ID
+            description: "Beneficiary identifier — repeats across years"
+            tests:
+              - not_null
+
+      - name: inpatient_claims
+        description: >
+          Medicare inpatient hospital claims 2008-2010.
+          Claim IDs may repeat across years at the source level.
+        columns:
+          - name: CLAIM_ID
+            description: "Claim identifier — may repeat across years"
+            tests:
+              - not_null
+          - name: BENEFICIARY_ID
+            description: "Foreign key to beneficiaries"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('cms', 'beneficiaries')
+                  field: BENEFICIARY_ID
+
+      - name: outpatient_claims
+        description: >
+          Medicare outpatient hospital claims 2008-2010.
+          Claim IDs may repeat across years at the source level.
+        columns:
+          - name: CLAIM_ID
+            description: "Claim identifier — may repeat across years"
+            tests:
+              - not_null
+          - name: BENEFICIARY_ID
+            description: "Foreign key to beneficiaries"
+            tests:
+              - not_null
+              - relationships:
+                  to: source('cms', 'beneficiaries')
+                  field: BENEFICIARY_ID

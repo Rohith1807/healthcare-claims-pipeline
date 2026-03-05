@@ -1,0 +1,86 @@
+version: 2
+
+models:
+  - name: stg_cms__beneficiaries
+    description: >
+      Cleaned and typed beneficiary demographics from CMS DE-SynPUF.
+      Dates cast from YYYYMMDD strings, gender and race codes decoded,
+      chronic condition flags converted to booleans.
+      Deduplicated to one row per beneficiary (most recent year kept)
+      since the source has one row per beneficiary per year (2008-2010).
+    columns:
+      - name: beneficiary_id
+        description: "Unique beneficiary identifier after deduplication - primary key"
+        tests:
+          - unique
+          - not_null
+      - name: birth_date
+        description: "Beneficiary date of birth cast to DATE from YYYYMMDD"
+        tests:
+          - not_null
+      - name: gender
+        description: "Decoded gender from CMS code - Male, Female, or Unknown"
+        tests:
+          - accepted_values:
+              values: ['Male', 'Female', 'Unknown']
+      - name: race
+        description: "Decoded race from CMS code"
+      - name: total_chronic_conditions
+        description: "Count of chronic conditions flagged for this beneficiary (0-11)"
+      - name: is_deceased
+        description: "True if beneficiary has a recorded death date"
+      - name: total_reimbursement
+        description: "Sum of inpatient, outpatient, and carrier reimbursements"
+
+  - name: stg_cms__inpatient_claims
+    description: >
+      Cleaned inpatient hospital claims with dates cast to DATE type,
+      financial amounts cast to numeric, and length of stay calculated.
+      Note: claim_id is not enforced as unique here because CMS DE-SynPUF
+      repeats claim IDs across years. Uniqueness is handled in intermediate
+      models where claims are scoped to a single year.
+    columns:
+      - name: claim_id
+        description: "Claim identifier - not globally unique across years"
+        tests:
+          - not_null
+      - name: beneficiary_id
+        description: "Foreign key to stg_cms__beneficiaries"
+        tests:
+          - not_null
+      - name: claim_type
+        description: "Always 'inpatient' for this model"
+        tests:
+          - accepted_values:
+              values: ['inpatient']
+      - name: length_of_stay_days
+        description: "Days between admission and discharge date"
+      - name: claim_payment_amount
+        description: "Total Medicare payment amount for the claim in USD"
+      - name: beneficiary_out_of_pocket
+        description: "Deductible plus coinsurance paid by the beneficiary"
+
+  - name: stg_cms__outpatient_claims
+    description: >
+      Cleaned outpatient hospital claims with dates cast to DATE type
+      and financial amounts cast to numeric.
+      Note: claim_id is not enforced as unique here because CMS DE-SynPUF
+      repeats claim IDs across years.
+    columns:
+      - name: claim_id
+        description: "Claim identifier - not globally unique across years"
+        tests:
+          - not_null
+      - name: beneficiary_id
+        description: "Foreign key to stg_cms__beneficiaries"
+        tests:
+          - not_null
+      - name: claim_type
+        description: "Always 'outpatient' for this model"
+        tests:
+          - accepted_values:
+              values: ['outpatient']
+      - name: claim_payment_amount
+        description: "Total Medicare payment amount for the claim in USD"
+      - name: beneficiary_out_of_pocket
+        description: "Part B deductible plus coinsurance plus blood deductible"
