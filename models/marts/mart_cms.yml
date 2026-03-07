@@ -1,0 +1,68 @@
+version: 2
+
+models:
+  - name: mart_claims__summary
+    description: >
+      Gold-layer mart aggregating Medicare claims by month, claim type,
+      age group, risk tier, gender, race, and state. Primary table for
+      revenue cycle and utilization dashboards in Power BI.
+    columns:
+      - name: claim_month_start
+        description: "First day of the claim month - use for time series charts"
+      - name: total_claims
+        description: "Total claim count for this segment and period"
+        tests:
+          - not_null
+      - name: total_medicare_payments
+        description: "Total Medicare payments in USD for this segment and period"
+
+  - name: mart_beneficiary__outcomes
+    description: >
+      Gold-layer mart with one row per beneficiary segment (age group,
+      gender, race, state, risk tier). Tracks chronic condition
+      prevalence rates, mortality, utilization, and cost by segment.
+    columns:
+      - name: total_beneficiaries
+        description: "Total beneficiaries in this segment"
+        tests:
+          - not_null
+      - name: mortality_rate_pct
+        description: "Percentage of beneficiaries in this segment who are deceased"
+      - name: diabetes_rate_pct
+        description: "Percentage of beneficiaries in this segment with diabetes"
+
+  - name: mart_provider__performance
+    description: >
+      Gold-layer mart with one row per provider. Tracks claim volume,
+      payment totals, revenue per patient, patient mix, and high risk
+      patient rate. Used for operational efficiency dashboards.
+    columns:
+      - name: provider_id
+        description: "Unique provider identifier - primary key"
+        tests:
+          - unique
+          - not_null
+      - name: total_payments
+        description: "Total Medicare payments across all claim types"
+      - name: revenue_per_patient
+        description: "Total payments divided by unique patient count"
+      - name: provider_size_tier
+        description: "Large / Medium / Small / Micro based on claim volume"
+        tests:
+          - accepted_values:
+              values: ['Large', 'Medium', 'Small', 'Micro']
+
+  - name: mart_chronic_conditions__analysis
+    description: >
+      Gold-layer mart comparing cost, utilization, and length of stay
+      between beneficiaries with and without each chronic condition.
+      Enables condition cost impact analysis by age group, gender, and race.
+    columns:
+      - name: condition_name
+        description: "Name of the chronic condition"
+        tests:
+          - not_null
+      - name: condition_prevalence_pct
+        description: "Percentage of beneficiaries in this segment with the condition"
+      - name: avg_cost_impact
+        description: "Average extra cost (USD) of having vs not having this condition"

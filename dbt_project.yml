@@ -25,4 +25,5 @@ models:
       +schema: intermediate
     marts:
       +materialized: table
+      +database: ANALYTICS_DB
       +schema: marts
