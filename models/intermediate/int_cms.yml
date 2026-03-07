@@ -1,0 +1,76 @@
+version: 2
+
+models:
+  - name: int_claims__combined
+    description: >
+      Unions inpatient and outpatient claims into a single claims table
+      with a surrogate key, claim year/month, and Medicare payment ratio.
+    columns:
+      - name: claim_key
+        description: "Surrogate key - unique across inpatient and outpatient claims"
+        tests:
+          - unique
+          - not_null
+      - name: claim_type
+        description: "Either inpatient or outpatient"
+        tests:
+          - accepted_values:
+              values: ['inpatient', 'outpatient']
+      - name: claim_payment_amount
+        description: "Total Medicare payment for the claim in USD"
+
+  - name: int_claims__with_beneficiary
+    description: >
+      Joins combined claims to beneficiary demographics. Calculates age
+      at time of claim, age group segmentation, and chronic condition
+      risk tier per claim.
+    columns:
+      - name: claim_key
+        description: "Surrogate key from int_claims__combined"
+        tests:
+          - unique
+          - not_null
+      - name: age_at_claim
+        description: "Beneficiary age in years at the time of the claim"
+      - name: age_group
+        description: "Age group bucket for the beneficiary at time of claim"
+        tests:
+          - accepted_values:
+              values: ['Pediatric (0-17)', 'Adult (18-44)', 'Middle-Aged (45-64)', 'Senior (65-79)', 'Elderly (80+)', 'Unknown']
+      - name: risk_tier
+        description: "Chronic condition risk tier based on total condition count"
+        tests:
+          - accepted_values:
+              values: ['Low Risk', 'Moderate Risk', 'High Risk', 'Very High Risk', 'Unknown']
+
+  - name: int_beneficiaries__enriched
+    description: >
+      One row per beneficiary enriched with their full inpatient and
+      outpatient claim history — totals, averages, first and last
+      claim dates, and risk segmentation.
+    columns:
+      - name: beneficiary_id
+        description: "Unique beneficiary identifier - primary key"
+        tests:
+          - unique
+          - not_null
+      - name: total_claims
+        description: "Total inpatient plus outpatient claims for this beneficiary"
+      - name: risk_tier
+        description: "Chronic condition risk tier"
+
+  - name: int_providers__summary
+    description: >
+      One row per provider with aggregated inpatient and outpatient
+      claim counts, payment totals, average payments, and unique
+      patient counts.
+    columns:
+      - name: provider_id
+        description: "Unique provider identifier - primary key"
+        tests:
+          - unique
+          - not_null
+      - name: total_claim_count
+        description: "Total claims across inpatient and outpatient"
+      - name: total_payments
+        description: "Total Medicare payments across all claim types"
