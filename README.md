@@ -67,6 +67,11 @@ CMS DE-SynPUF CSVs
 | 6 — SQL Analysis | Ad-hoc Snowflake queries validate Gold outputs and generate the key findings documented below |
 | 7 — Power BI | Snowflake Gold views connected to Power BI Desktop — 35+ DAX measures, DateTable, 4-page dashboard |
 
+<img width="1835" height="776" alt="Screenshot 2026-03-10 154116" src="https://github.com/user-attachments/assets/4417c15c-4f4a-444c-81ff-0b45767baffe" />
+
+<img width="1895" height="975" alt="Screenshot 2026-03-10 154322" src="https://github.com/user-attachments/assets/08de6ddb-0b59-4746-9421-bde34bed8636" />
+
+
 ---
 
 ## Key Findings
